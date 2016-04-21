@@ -1,0 +1,2 @@
+This supv will be loaded to core-17 and responsible for supervising the process migration. 
+It coordinates all PM-agents (stub programs) running on free cores.

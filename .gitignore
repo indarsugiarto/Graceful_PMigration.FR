@@ -1,6 +1,5 @@
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Makefile
-cmake_install.cmake
-install_manifest.txt
+# Don't include object and archieve
+*.[oa]
+
+# Don't include specific qtcreator files
+*.user*

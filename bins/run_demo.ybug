@@ -1,0 +1,5 @@
+app_load stub.aplx . 1-16 254
+sleep 0.5
+app_load trigger.aplx . 17 255
+sleep 1
+app_load pingpong.aplx . 2,5 16

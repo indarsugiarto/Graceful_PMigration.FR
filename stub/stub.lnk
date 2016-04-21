@@ -1,0 +1,86 @@
+/* NEW: Just for a test case, I allocate 8KB (0x2000) for code and 2KB (0x800) for data this example. */
+
+/* The following script proves that even with small size of data
+   (as reported by RW_DATA.bin), BUT with correct location of stack,
+   the program runs correctly at "STUB" location.
+   Conclusion: Mungkin HARUS ada space sekitar 2KB antara RW_DATA dan
+   STACK. Karena jika RW_DATA dialokasikan 1KB dan STACK_TOP hanya 4KB
+   dari DTCM_BASE (jadi STACK hanya berjarak 1KB dari RW_DATA), dia
+   tidak berfungsi. Tapi jika diberi space 2KB, baru berfungsi.
+*/
+
+/* adopted from sark.lnk - GNU linker script for SARK/SpiNNaker applications
+ * 1k = 1024 = 0x400
+ * 2k = 2*1024 = 2048 = 0x800
+ * 4k = 4*1024 = 4096 = 0x1000
+ * 6k = 6*1024 = 6144 = 0x1800
+ * 8k = 8*1024 = 8192 = 0x2000
+ * STUB size = 8k
+*/
+
+
+MEMORY
+{
+    /* ITCM : ORIGIN = 0, LENGTH = 0x7f00 */
+    ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000	/* 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM */
+    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800
+}
+
+
+SECTIONS
+{
+    ITCM_BASE = 0x5F00;		/* with 8K (0x2000) of .text = 0x7F00 - 0x2000 = 0x5F00 */
+    DTCM_BASE = 0x00400000;
+
+    /* STACK_TOP = 0x00410000; -> this is the original */
+    /* STACK_TOP = 0x00401000; -> DOESN'T WORK: 4KB above the DTCM_BASE, where the data is only 1KB */
+    STACK_TOP = 0x00401400;	/* OK: 5KB above the DTCM_BASE, where the data is only 1KB */
+    STACK_SIZE = 0x800;         /* 2KB of stack */
+
+    APLX_SIZE = 64;
+    APLX_ENTRY = 16;
+
+    . = ITCM_BASE;
+
+    RO_DATA :
+    {
+	  * (_alib_reset);	/* khusus _alib_reset */
+	  * (alib_*);		/* ada alib_get_cp15, alib_set_cp15, alib_init_mode, alib_irq_on, ... , alib_aplx, _alib_align*/
+	  * (.text*);
+	  * (.rodata*);
+    } > ITCM
+
+    . = ALIGN (4);
+
+    RO_LENGTH = . - ITCM_BASE;
+
+    . = DTCM_BASE;
+
+    RW_DATA  :
+    {
+	* (.data*);
+    } > DTCM
+
+    . = ALIGN (4);
+
+    RW_LENGTH = . - DTCM_BASE;
+
+    ZI_DATA  :
+    {
+	* (.bss*);
+	* (COMMON);
+    } > DTCM
+
+    . = ALIGN (4);
+
+    HEAP_BASE = .;
+
+    RO_BASE = ITCM_BASE;
+    RO_FROM = APLX_SIZE;
+
+    RW_BASE = DTCM_BASE;
+    RW_FROM = APLX_SIZE + RO_LENGTH - APLX_ENTRY;
+
+    ZI_BASE = RW_BASE + RW_LENGTH;
+    ZI_LENGTH = HEAP_BASE - ZI_BASE;
+}

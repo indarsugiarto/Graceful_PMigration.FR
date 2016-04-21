@@ -1,0 +1,9 @@
+This simple hello world application will print "hello world" every second.
+The trigger program will move the hello world program from one core to another core.
+
+Here how it is supposed to work:
+1. Load supv in core-17
+2. Load helloW in core-1
+3. Load trigger in core-2
+   - it will ask supv to move helloW from core-1 to core3
+

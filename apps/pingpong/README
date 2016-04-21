@@ -1,0 +1,3 @@
+pongping.c is used to see if sdp mechanism is better than mcpl in term of program size
+
+So, use pingpong.c!

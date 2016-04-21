@@ -1,0 +1,5 @@
+#!/bin/bash
+make APP=helloW
+make APP=helloW tidy
+make APP=trigger
+make APP=trigger tidy

@@ -1,0 +1,78 @@
+This experiment will demonstrate the process migration mechanism using Fixed-Route packets.
+In this project, we'll be using spin1_api_ext, since we are going to work with the second
+timer and will create new functionalities.
+
+
+For the old experiments in Pmigration, look at ~/Projects/SpiNN/general/Pmigration/
+
+==========================================================================================
+
+There are three apps that work as follows:
+1. pmagent.aplx is a daemon-app that resides in the upper part of ITCM.
+2.a. hello.aplx is a simple stand-alone application that will be migrated
+2.b. pingpong.aplx is the example application that will be migrated
+3. supv.aplx is the supervisor program that manages: memory allocation, 
+   PMagents communication.
+
+------------------------------------------------------------------------------------------
+
+** pmagent.aplx
+- will reside in higher memory space of ITCM (about 4K - 6K)
+- will use 2K in lower DTCM for its data and stack
+
+** hello.aplx
+- run as a standalone app
+- it prints "Hello from core <> with app-ID <>" every second
+
+** pingpong.aplx
+- initially, two cores will be used as pinger and ponger (pinger will use core 2
+  and ponger will use core 5)
+- in the beginning, it makes a copy of itself into sdram and inform supervisor
+  about its tcm copy in the sdram
+- regularly make a backup of data and PC and inform supervisor
+- do simple send and receive MCPL (for demonstration only)
+
+** supv.aplx
+This is the "supervisor" app (still under development, but here we just mimic one
+of its functionality, ie., for triggering process migration).
+
+-----------------------------------------------------------------------------------------
+
+The proposed scenario using pingpong: 
+- We'll kill the pinger in core-2 and move it to core-7
+In the demo, after 10 seconds, it will:
+- send a message to the stub at core-7
+- while the pmagent at core-7 does its internal task,
+  the supv.aplx will detect/reallocate the routing entry (ie., moving destination
+  from core-2 to core-7)
+- supv.aplx is responsible for allocating heap in sdram for pmagent backup
+
+** Collected ideas for additional api functions:
+- checkpointing: modify spin1 so that everytime a callback is executed, it will 
+  store state automatically to a registered sdram buffer
+  question arises: when/where the sdram buffer will be allocated, by who
+  --> by the profiler, which is the one who inform the stub to fetch from sdram
+
+
+** FR scheme 
+- Each elements (PMagents, supv
+
+** currently working list:
+1. working on pingponger 
+   - let's make life easier: use API
+   - revising the MCPL so that it uses the pre-defined key allocations such as: 
+     KEY_SUPV_SEND_TCMSTG, KEY_SUPV_SEND_STOP, KEY_APP_ASK_TCMSTG, etc.
+     and it also uses scheme ccssiiyy when sending an mcpl
+
+2. working on supv-core
+   - check if app-core send a request for TCM storage
+   - check if app-core send an update for AJMP
+   - set trigger to stub (core-7) by sending tcm address 
+   - waiting for stub "ready" signal
+   - set appID to the go-key and send the go-key to the stub
+   - notify app-core to stop, revise the routing table, and send a "go"
+
+3. Berikutnya:
+   - test pingpong, individual: done!
+   - test stub, individual
+   - test trigger, individual

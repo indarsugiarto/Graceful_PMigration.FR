@@ -1,0 +1,4 @@
+#!/bin/bash
+ybug spin3 << EOF
+app_load ../../stub/stub.aplx . 3-16 254
+EOF
