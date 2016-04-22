@@ -76,3 +76,11 @@ In the demo, after 10 seconds, it will:
    - test pingpong, individual: done!
    - test stub, individual
    - test trigger, individual
+
+
+
+============================= Regarding FR on stub & supv ============================
+The ideas:
+1. Each core must modify FR-register before sending the packet (this is because FR 
+   register only has one entry).
+_____________________________________________________ Regarding FR on stub & supv ____
