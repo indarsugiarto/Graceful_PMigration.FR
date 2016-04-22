@@ -25,7 +25,7 @@
 /* NOTE: Don't forget to add API=0 in the make process if you use SARK */
 /*---------------------------------------------------------------------*/
 
-#include "../pmigration.h"
+#include "../../include/pmigration.h"
 
 #define USE_SARK_OR_API			USE_API
 

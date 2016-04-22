@@ -1,8 +1,8 @@
-APP = supv
+APP = pmagent
 
 # for supv, it is ok to use normal linker file
-# other lnk are: app.lnk and pmagent.lnk
-SCRIPT = ../include/sark.lnk
+# lnk files are: pmagent.lnk, app.lnk and sark.lnk
+SCRIPT = ../include/pmagent.lnk
 
 # List of objects making up the application. If there are other files
 # in the application, add their object file names to this variable.
@@ -18,3 +18,4 @@ include ../Makefile.common
 OUTPUT_DIR := ../binaries/
 
 all: $(APP).aplx
+

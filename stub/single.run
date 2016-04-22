@@ -1,3 +1,0 @@
-ybugMyBoard << EOF
-app_load stub.aplx . 1 254
-EOF

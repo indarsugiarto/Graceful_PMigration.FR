@@ -4,11 +4,10 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-    stub.c
+    helloW.c
 
 INCLUDEPATH += /opt/spinnaker_tools_134/include
 
 DISTFILES += \
-    stub.lnk \
     Makefile \
-    sark.lnk
+    README

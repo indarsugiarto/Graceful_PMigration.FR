@@ -1,4 +1,0 @@
-#!/bin/bash
-ybug spin3 << EOF
-app_load ../../supv/supv.aplx . 17 255
-EOF

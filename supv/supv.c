@@ -5,13 +5,8 @@
  * */
 
 #include <spin1_api.h>
-#include "../pmigration.h"
-
-#define USE_MCPL_OR_SDP		USE_SDP
-#define USE_SARK_OR_API		USE_API
-
+#include "../include/pmigration.h"
 /* for demonstration only */
-#define STUB_REPLACING_CORE			NEW_PINGER_CORE	// use core-7 to replace core-2
 
 sdp_msg_t *msg;
 uint myCoreID;
@@ -98,7 +93,6 @@ void c_main(void)
 	// for demonstration, we use timer to stimulate external trigger for migration
 	spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
 	// Let's trigger the demo from here. After several seconds (see timeout()), it'll start...
-	spin1_callback_on(TIMER_TICK, hTimer, TIMER_PRIORITY);
 	spin1_start(SYNC_NOWAIT);
 }
 

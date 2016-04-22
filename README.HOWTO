@@ -83,4 +83,11 @@ In the demo, after 10 seconds, it will:
 The ideas:
 1. Each core must modify FR-register before sending the packet (this is because FR 
    register only has one entry).
+   see ~/Projects/SpiNN/general/miscTest/try_FR
+2. We can specify "key" field for signalling.
+   Ex: SUPV_SEND_START_SIGNAL, STUB_SEND_TCM_ALLOC, etc.
 _____________________________________________________ Regarding FR on stub & supv ____
+
+
+
+

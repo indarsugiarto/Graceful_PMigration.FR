@@ -24,14 +24,13 @@
  *   [Core-ID(7:6), where-to-start(5:0)] [tcm-in-sdram(7:0)]
  * 20.11.2015
  * - Remove checkRouterEntry(), since it is handled by supv-core
+ * 
+ * 12.03.2015
+ * - Use FR instead since MCPL and SDP will be used by other apps
  * */
 
 #include <sark.h>
-#include "../pmigration.h"
-
-#define USE_MCPL_OR_SDP			USE_MCPL
-#define USE_SARK_OR_API			USE_API
-
+#include "../include/pmigration.h"
 
 uint stubTriggerKey;
 uint myCoreID;

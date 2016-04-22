@@ -1,4 +1,0 @@
-#!/bin/bash
-ybug spin3 << EOF
-app_stop 16
-EOF

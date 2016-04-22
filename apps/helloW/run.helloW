@@ -1,4 +1,0 @@
-#!/bin/bash
-ybug spin3 << EOF
-app_load helloW.aplx . 1 16
-EOF

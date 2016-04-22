@@ -4,10 +4,10 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-    pingpong.c
+    pmagent.c
 
 INCLUDEPATH += /opt/spinnaker_tools_134/include
 
 DISTFILES += \
-    Makefile \
-    README
+    pmagent.lnk \
+    Makefile
