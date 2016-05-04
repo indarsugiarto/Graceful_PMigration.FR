@@ -1,0 +1,5 @@
+*.lnk are linker scripts
+pmapp-spinnaker.h is the modified spinnaker.h that will be linked
+by ../spinnaker_tools_pm/pmapps
+pmagent-spinnaker.h is the modified spinnaker.h that will be linked
+by ../spinnaker_tools_pm/pmagents

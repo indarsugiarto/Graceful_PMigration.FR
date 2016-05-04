@@ -97,8 +97,8 @@ void hTimer(uint tick, uint null)
 
 void c_main(void)
 {
-#if(DEBUG_LEVEL==1) // for debugging only. In release version, it will be removed!
 	io_printf(IO_STD, "pmagent @ core-%d id-%d\n",sark_core_id(), sark_app_id());
+#if(DEBUG_LEVEL==1) // for debugging only. In release version, it will be removed!
 	spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
 	spin1_callback_on(TIMER_TICK, hTimer, PRIORITY_TIMER);
 #endif
