@@ -3,3 +3,8 @@
 
 # Don't include specific qtcreator files
 *.user*
+
+# Don't include build directory
+build/
+*build/
+

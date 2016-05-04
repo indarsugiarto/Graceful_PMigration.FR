@@ -1,12 +1,47 @@
-/* TODO:
- * 1. Make sure trigger.aplx runs first and after app. 1 second, load the pingpong
- *    The stub.aplx should also run before trigger.aplx
+/* Flows:
+ * 1. supv will be loaded first during which:
+ *    1.1. Prepare SDRAM
+ * 2. wait for request from pmagent
+ *    2.1. pmagent will request the allocated SDRAM
+ * 3. pmagent regularly do check-pointing
+ *    3.1. pmagent might require modification of API: timer, dma
  *
+ * When the pmagent send FR, it uses the following format:
+ * key [core-id, SIGNAL_TYPE]
+ * both core-id and SIGNAL_TYPE are ushort
+ *
+ * And the reply from supv will be like:
+ * key [additional_info, SIGNAL_TYPE]
+ * both additional_info and SIGNAL_TYPE are ushort.
+ *
+ * We assume that supv will be loaded into core-1
+ * We allocate SDRAM for all MAX_AVAIL_CORE since it is pretty small: (32+64)*16=1536KB=1.5MB out of 128MB
  * */
 
+/*
+From pmigration.h:
+---------------------
+typedef struct app_stub		// application holder
+{
+    ushort coreID;
+    ushort appID;
+	//uint *tcm_addr;
+	uint *itcm_addr;
+	uint *dtcm_addr;
+    uint *restart_addr;
+	// uint registers[];	// should hold all registers of the microprocessors?
+} app_stub_t;
+
+*/
+
 #include <spin1_api.h>
-#include "../include/pmigration.h"
-/* for demonstration only */
+#include "../include/pmigration.h"	
+
+#define DEMO	1			// 1 = helloW, 2 = pingpong
+
+/* forward declaration*/
+void triggerDemo1();
+void triggerDemo2();
 
 sdp_msg_t *msg;
 uint myCoreID;
@@ -17,82 +52,88 @@ void timeout(uint tick, uint null);
 void initAppStub()
 {
 	uchar i;
-	for(i=0; i<MAX_AVAIL_CORE; i++) as[i].coreID = i+1;
-}
-
-/* SYNOPSIS
- *		allocateTCM() will allocate space in sdram to make a storage for a TCM's application
- *
- * FUTURE:
- *		- if app is exit, then deallocate the sdram
- * */
-void allocateTCM(uint core, uint appID)
-{
-	//for debugging
-	io_printf(IO_BUF, "Will allocate TCMSTG for core-%d...\n", core);
-
-	// first, allocate TCM storage in sdram and tag its purpose
-	// sark_xalloc will return a pointer to allocated block or NULL on failure
-	uint *sdram_addr = (uint *)sark_xalloc(sv->sdram_heap, APP_TCM_SIZE, core, ALLOC_LOCK);
+    // then allocate SDRAM to hold TCM for pmagent
+	uint szTCM = (APP_PROG_SIZE+APP_DATA_SIZE)*MAX_AVAIL_CORE; //ITCM+DTCM for all MAX_AVAIL_CORE cores
+	uint *sdram_addr = (uint *)sark_xalloc(sv->sdram_heap, szTCM, SUPERVISOR_APP_ID, ALLOC_LOCK);
 	if(sdram_addr==NULL) {
-		io_printf(IO_BUF, "Fatal Error: SDRAM allocation for TCM storage!\n");
+		io_printf(IO_STD, "Fatal Error: SDRAM allocation for TCM storage!\n");
 		rt_error(RTE_ABORT);
 	}
-
-	// just for debugging
-	io_printf(IO_BUF, "Allocating TCMSTD at 0x%x\n", sdram_addr);
-
-	as[core-1].tcm_addr = sdram_addr;
-
-	// then send notification to requesting app
-	uint key = KEY_SUPV_SEND_TCMSTG | (core << 24);
-	uint payload = (uint)as[core-1].tcm_addr;
-	io_printf(IO_BUF, "Supposed to send MCPL with key 0x%x and payload 0x%x\n", key, payload);
-	spin1_send_mc_packet(key, payload, 1);
-}
-
-/* SYNOPSIS:
- *		supv-core is responsible to allocate keys for all app- and stub-cores
- *		benefit: stub-core doesn't need to allocate it manually
- * */
-void initRouter()
-{
-	uint i, e = rtr_alloc(17);	// allocate all 17 cores, excluding the monitor core-0
-	if(e != 0) {
-		for(i=1; i<=17; i++)
-			rtr_mc_set(e+(i-1), (i << 24), MASK_CORE_SELECTOR, (1 << (6 + i)));
-	}
-	else {
-		rt_error(RTE_ABORT);
-	}
+    else {
+        io_printf(IO_BUF, "Allocating TCMSTD at 0x%x\n", sdram_addr);
+        // then assign each TCM buffer accordingly
+		// each TCM is composed of ITCM (32*1024) and DTCM (64*1024)
+		uint szITCM = 32*1024, szDTCM = 64*1024;
+		uint *ptr = sdram_addr;
+        for(i=0; i<MAX_AVAIL_CORE; i++) {
+            as[i].coreID = i+2;	// since we assume supv is in core-1
+			as[i].itcm_addr = ptr;
+			as[i].dtcm_addr = ptr + szITCM;
+			ptr += (szITCM + szDTCM);
+        }
+    }
 }
 
 void hSDP(uint mBox, uint port)
 {
-
+	sdp_msg_t *msg = (sdp_msg_t *)mBox;
+	if(port==DEMO_TRIGGERING_PORT){
+#if (DEMO==1)
+		triggerDemo1();
+#elif (DEMO==2)
+		triggerDemo2();
+#endif
+	}
+	spin1_msg_free(msg);
 }
 
-
+void hFR(uint key, uint payload)
+{
+	ushort sender, sType;
+	sender = key >> 16;
+	sType = key & 0xFFFF;
+	// KEY_APP_ASK_TCMSTG, during initial run, the app will ask TCMSTG for future check-pointing
+	if(sType==KEY_APP_ASK_TCMSTG) {
+		uint newRoute = 1 << (sender+6);	// NOTE: core-1 is used for supv
+		rtr_fr_set(newRoute);
+		// first, send the ITCMSTG
+		key = KEY_SUPV_REPLY_ITCMSTG;
+		payload = (uint)as[sender-2].itcm_addr;
+		spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+		// second, send the DTCMSTG
+		key = KEY_SUPV_REPLY_DTCMSTG;
+		payload = (uint)as[sender-2].dtcm_addr;
+		spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+		rtr_fr_set(0);	// reset FR register
+		return;
+	}
+	if(sType==KEY_APP_SEND_AJMP) {
+		as[sender-2].restart_addr = (uint *)payload;
+	}
+}
 
 void c_main(void)
 {
 	myCoreID = sark_core_id();
-	uint myAppID = sark_app_id();
-	// put to core-17 to mimic my future supervisory program
-	if(myCoreID != 17 || myAppID != SUPERVISOR_APP_ID) {
-		io_printf(IO_STD, "Put me in core-17 with ID-255 please!\n");
-		rt_error(RTE_ABORT);
-	}
+
 	// init appstub ("as") to hold all stubs' data
 	initAppStub();
 
-	initRouter();
+	spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, PRIORITY_FR);
 
-	spin1_callback_on(SDP_PACKET_RX, hSDP, 0);
+	// for demonstration, we use sdp to trigger migration demo
+    spin1_callback_on(SDP_PACKET_RX, hSDP, PRIORITY_SDP);
 
-	// for demonstration, we use timer to stimulate external trigger for migration
-	spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
-	// Let's trigger the demo from here. After several seconds (see timeout()), it'll start...
-	spin1_start(SYNC_NOWAIT);
+    spin1_start(SYNC_NOWAIT);
 }
 
+/* For Demonstration purpose */
+void triggerDemo1()
+{
+
+}
+
+void triggerDemo2()
+{
+
+}

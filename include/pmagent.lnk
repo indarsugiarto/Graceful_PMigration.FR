@@ -19,23 +19,34 @@
 */
 
 
+/* What we want: stack size = 2KB = 0x800
+		 data size = 2KB = 0x800
+		 gap between stack and data = 1KB = 0x400
+   What we have: with base 0x400000, then if the stack_top is 0x400000 + 0x800(data) + 0x800(szStack) = 0x401000
+		 it DOESN'T work! It turns out that stack_top needs to be 0x401400 -> hence, the stack_base = 0x401400 - 0x800 = 0x400C00
+*/
+
 MEMORY
 {
     /* ITCM : ORIGIN = 0, LENGTH = 0x7f00 */
-    ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000	/* 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM */
-    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800
+    ITCM : ORIGIN = 0x5F00, LENGTH = 0x1F00	/* 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM */
+						/* LENGTH bukan 0x2000, karena terpakai 0x100 untuk "Reserved" */
+    DTCM : ORIGIN = 0x400000, LENGTH = 0x800	/* Indar: 2KB of data, we don't put STACK in this memory definition */
 }
 
 
 SECTIONS
 {
-    ITCM_BASE = 0x5F00;		/* with 8K (0x2000) of .text = 0x7F00 - 0x2000 = 0x5F00 */
+    ITCM_BASE = 0x5F00;		/* with 8K (0x2000) of .text = 0x7F00 - 0x2000 = 0x5F00, where "Reserved" is at 0x1F00 to 0x2000 */
     DTCM_BASE = 0x00400000;
 
     /* STACK_TOP = 0x00410000; -> this is the original */
     /* STACK_TOP = 0x00401000; -> DOESN'T WORK: 4KB above the DTCM_BASE, where the data is only 1KB */
-    STACK_TOP = 0x00401400;	/* OK: 5KB above the DTCM_BASE, where the data is only 1KB */
+    STACK_TOP = 0x00401400;	/* OK: 5KB above the DTCM_BASE, where the data is only 2KB -> hence it seems that it needs a gap 1KB. Why??? */
     STACK_SIZE = 0x800;         /* 2KB of stack */
+    /* Hence, STACK_BASE = 0x400C00 */
+
+    /* TODO: coba lagi nanti stack-nya diturunkan !!!*/
 
     APLX_SIZE = 64;
     APLX_ENTRY = 16;

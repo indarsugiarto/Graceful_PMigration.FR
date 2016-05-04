@@ -11,9 +11,9 @@
 /* adopted from sark.lnk - GNU linker script for SARK/SpiNNaker applications
  * 2k for STUB data = 2*1024 = 2048 = 0x800
 
- from stub.c:
+ from pmigration.h:
 
- #define STUB_DATA_BASE			0
+ #define STUB_DATA_BASE			0x00000000
  #define STUB_DATA_SIZE			0x800			// 2KB is enough?
  #define STUB_STACK_TOP			0x00401400;		// OK: 5KB above the DTCM_BASE, where the data is only 1KB
 								// it's supposed to be 0x800 + 0x800 = 0x1000, but somehow it doesn't work!
@@ -26,7 +26,7 @@
  #define APP_PROG_SIZE			0x5F00			// = 0x8000 - 0x2000 - 0x100 = ITCM_SIZE - STUB_PROG_SIZE - RESERVED_ITCM_TOP_SIZE
  #define APP_PROG_BASE			0x00000000
  #define APP_DTCM_BASE			0x00401800		// normal DTCM_BASE 0x00400000
-								// in this case, I put 1K above the sub_stack_top (0x1400 + 0x400)
+								// but here, I put 1K above the sub_stack_top (0x1400 + 0x400)
  #define APP_DATA_SIZE			0xE000			// = 0x40f800 - 0x401800 = LOKASI_DIBAWAH_STACK - LOKASI_AWAL_APP_DTCM
  #define APP_STACK_SIZE			0x800			// the same value as usual
  #define APP_STACK_TOP			0x00410000
@@ -36,17 +36,17 @@
 
 MEMORY
 {
-    ITCM : ORIGIN = 0, LENGTH = 0x5F00
-    DTCM : ORIGIN = 0x401800, LENGTH = 0xE000
-}
+    ITCM : ORIGIN = 0, LENGTH = 0x5F00				/* Indar: stub-itcm stays from 0x5F00 to 0x7F00 */
+    DTCM : ORIGIN = 0x401800, LENGTH = 0xE000			/* Indar: stub-dtcm stays from 0x400000 to 0x401800, including stack */
+}								/*        hence, DTCM length will be: 0x40f800 - 0x401800 = 0xE000 */
 
 
 SECTIONS
 {
     ITCM_BASE = 0x00000000;
-    DTCM_BASE = 0x00401800;
-
-    STACK_TOP = 0x00410000;
+    DTCM_BASE = 0x00401800;					/* ada jeda 1KB (0x400) di atas STACK_TOP dari pmagent */
+								/* STACK_TOP dari pmagent ada di 0x401400 */
+    STACK_TOP = 0x00410000;					/* As the original definition in sark.lnk for normal spinnaker apps */
     STACK_SIZE = 0x800;
 
     APLX_SIZE = 64;

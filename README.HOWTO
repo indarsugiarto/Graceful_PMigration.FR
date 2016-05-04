@@ -91,3 +91,42 @@ _____________________________________________________ Regarding FR on stub & sup
 
 
 
+============================= Regarding spinnaker.h =============================
+In pmapps:
+// Memory definitions
+//#define ITCM_BASE             0x00000000	// Indar: this is the original
+#define ITCM_BASE               0x00000000      // Indar: this is modified for pmagent
+//#define ITCM_SIZE             0x00008000	// Indar: this is the original 32 KB
+#define ITCM_SIZE               0x00006000	// Indar: this is modified for pmagent (0x6000 = 24KB = 0x8000(32KB$
+#define ITCM_TOP                (ITCM_BASE + ITCM_SIZE) // Indar: this is the original, what happens for pmapps?
+
+#define DTCM_BASE               0x00401800	// Indar: it is above the DTCM of pmagent
+//#define DTCM_SIZE      	0x00001800	// Indar: this is the pmagent DTCM (includes pmagent STACK)
+//#define DTCM_SIZE             0x00010000	// Indar: this is the original (64 KB)
+#define DTCM_SIZE               0x0000EC00	// Indar: this is the remaining 59KB (after pmagent with 2KB of dat$
+#define DTCM_TOP                (DTCM_BASE + DTCM_SIZE) // Indar: so, what will happen with this setting?
+
+
+In pmagents:
+// Memory definitions
+//#define ITCM_BASE             0x00000000	// Indar: this is the original
+#define ITCM_BASE               0x00005F00      // Indar: this is modified for pmagent
+//#define ITCM_SIZE             0x00008000	// Indar: this is the original 32 KB
+#define ITCM_SIZE               0x00002000	// Indar: this is modified for pmagent (0x2000 = 8KB)
+#define ITCM_TOP                (ITCM_BASE + ITCM_SIZE) // Indar: this is the original, what happens for pmagent?
+
+#define DTCM_BASE               0x00400000      // Indar: the original is the same for pmagent
+//#define DTCM_SIZE             0x00010000	// Indar: this is the original (64 KB)
+#define DTCM_SIZE               0x00001800	// Indar: for pmagent with 2KB of data and 2KB of stack (the stack $
+#define DTCM_TOP                (DTCM_BASE + DTCM_SIZE) // Indar: so, what will happen with this setting?
+
+
+Kesimpulannya:
+Reserved area (tempat buffer APLX dan beberapa fungsi lainnya) TETAP
+dicadangkan untuk masing-masing pmapps dan pmagents karena perhitungan
+ITCM_TOP memakai ITCM_BASE dan ITCM_SIZE, serta di file sark.h
+ada definisi penggunakaan ITCM_TOP tersebut untuk APLX_BUFFER
+
+_____________________________________________________ Regarding spinnaker.h ____
+
+

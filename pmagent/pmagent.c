@@ -1,5 +1,5 @@
 /* SYNOPSIS
- *		Stub will stay somewhere at higher ITCM and response to a call via MCPL to transfer
+ *		Stub will stay somewhere at higher ITCM and response to a call via FR to transfer
  *		code from SDRAM to lower partition of ITCM and DTCM.
  *
  *
@@ -29,67 +29,83 @@
  * - Use FR instead since MCPL and SDP will be used by other apps
  * */
 
-#include <sark.h>
+/* =================================================================================================================
+ * TODO: Copy spinnaker_tools_134 ke folder Gracefule_PMigration.FR karena harus memodifikasi spinnaker.h dan sark.h
+   lalu meng-compile ulang supaya bisa dipakai di sini!!!!
+   =================================================================================================================*/
+
+#include <spin1_api.h>
 #include "../include/pmigration.h"
 
 uint stubTriggerKey;
-uint myCoreID;
-uint myTick;
-uint dtcm_addr = 0;
-uint itcm_addr = 0;
+uint *dtcm_addr = 0;
+uint *itcm_addr = 0;
 uint ajmp_addr = 0;
+uint dmaCntr = 0;
 
-void dmaDoneHandler(uint tid, uint tag)
+#define FETCH_ITCM	0xfe7c41
+#define FETCH_DTCM	0xfe7c4d
+
+void hDMADone(uint tid, uint tag)
 {
 	// jump to app-addr
-}
-
-
-void sdpHandler(uint mbox, uint port)
-{
-	sdp_msg_t *sdp_msg = (sdp_msg_t *) mbox;
-	uint addr[3];
-	sark_mem_cpy((void *)addr, (void *)sdp_msg->data, sizeof(uint)*3);
-	itcm_addr = addr[0];
-	dtcm_addr = addr[1];
-	ajmp_addr = addr[2];
-
-#if(DEBUG_LEVEL==1)
-	if(sdp_msg->cmd_rc==STUB_TRIGGER_CMD && port==STUB_SDP_PORT) {
-		io_printf(IO_BUF, "Core-%d receives a message in port-%d:\n", myCoreID, port);
-		io_printf(IO_BUF, "seq = %d\n", sdp_msg->seq);
-		io_printf(IO_BUF, "APP_ITCM_ADDR = 0x%x\n", addr[0]);
-		io_printf(IO_BUF, "APP_DTCM_ADDR = 0x%x\n", addr[1]);
-		io_printf(IO_BUF, "APP_AJMP_ADDR = 0x%x\n\n", addr[2]);
+	dmaCntr++;
+	if(dmaCntr==2) { // both ITCM and DTCM are fetched
+		// jump to AJMP
 	}
-#endif
-	//TODO: dma transfer
+}
 
-	sark_msg_free(sdp_msg);
+// getTCM will be scheduled whenever *tcm_addr != 0
+void getTCM(uint arg0, uint arg1)
+{
+	uint status;
+	// get itcm
+	status = spin1_dma_transfer(FETCH_ITCM, (void *)itcm_addr, (void *)APP_PROG_BASE, DMA_READ, APP_PROG_SIZE);	 // direction: 0 = transfer to TCM, 1 = transfer to system
+#if(DEBUG_LEVEL==1)
+	if(status==FAILURE)
+		io_printf(IO_STD, "DMA-ITCM fail!\n");
+#endif
+	// get dtcm
+	status  = spin1_dma_transfer(FETCH_DTCM, (void *)dtcm_addr, (void *)APP_DTCM_BASE, DMA_READ, APP_DATA_SIZE);
+#if(DEBUG_LEVEL==1)
+	if(status==FAILURE)
+		io_printf(IO_STD, "DMA-DTCM fail!\n");
+#endif
+}
+
+void hFR(uint key, uint payload)
+{
+	ushort sender, sType;
+	sender = key >> 16;
+	sType = key & 0xFFFF;
+	if(key==KEY_SUPV_TRIGGER_ITCMSTG) {
+		itcm_addr = (uint *)payload;
+		if(itcm_addr != 0 && dtcm_addr != 0) spin1_schedule_callback(getTCM, 0, 0, PRIORITY_DMA);
+	}
+	else if(key==KEY_SUPV_TRIGGER_DTCMSTG) {
+		dtcm_addr = (uint *)payload;
+		if(itcm_addr != 0 && dtcm_addr != 0) spin1_schedule_callback(getTCM, 0, 0, PRIORITY_DMA);
+	}
 }
 
 #if(DEBUG_LEVEL==1)
-void timerHandler(uint tick, uint null)
+void hTimer(uint tick, uint null)
 {
-	myTick++;
 	io_printf(IO_BUF, "Tick-%d\n", tick);
-	timer_schedule_proc(timerHandler, myTick, 0, TIMER_TICK_PERIOD_US);	// Reschedule ourselves again
 }
 #endif
 
 void c_main(void)
 {
-	myCoreID = sark_core_id();
-
-	event_register_queue(dmaDoneHandler, EVENT_DMA, SLOT_0, PRIO_0);
-	event_register_queue(sdpHandler, EVENT_SDP, SLOT_1, PRIO_1);
-
-#if(DEBUG_LEVEL==1)	// only for debugging, should be removed at final version!!!
-	event_register_timer(SLOT_2);
-	event_queue_proc(timerHandler, 0, 0, PRIO_2);
+#if(DEBUG_LEVEL==1) // for debugging only. In release version, it will be removed!
+	io_printf(IO_STD, "pmagent @ core-%d id-%d\n",sark_core_id(), sark_app_id());
+	spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
+	spin1_callback_on(TIMER_TICK, hTimer, PRIORITY_TIMER);
 #endif
 
-	event_start(0, 0, SYNC_NOWAIT);
+	spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, PRIORITY_FR);
+	spin1_callback_on(DMA_TRANSFER_DONE, hDMADone, PRIORITY_DMA);
+	spin1_start(SYNC_NOWAIT);
 }
 
 

@@ -1,5 +1,5 @@
 #DIRS = supv pmagent apps
-DIRS = supv pmagent apps
+DIRS = apps
 
 RM := \rm -rf
 LS := \ls -l
