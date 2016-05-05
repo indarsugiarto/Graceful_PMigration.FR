@@ -29,9 +29,10 @@
 MEMORY
 {
     /* ITCM : ORIGIN = 0, LENGTH = 0x7f00 */
+    /* ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000 */
     ITCM : ORIGIN = 0x5F00, LENGTH = 0x1F00	/* 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM */
 						/* LENGTH bukan 0x2000, karena terpakai 0x100 untuk "Reserved" */
-    DTCM : ORIGIN = 0x400000, LENGTH = 0x800	/* Indar: 2KB of data, we don't put STACK in this memory definition */
+    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800	/* Indar: 2KB of data, we don't put STACK in this memory definition */
 }
 
 

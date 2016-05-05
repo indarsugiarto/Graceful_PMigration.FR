@@ -89,4 +89,6 @@ typedef struct app_stub		// application holder
 #define PONGER_CORE		5
 #define NEW_PINGER_CORE		7
 #define DEMO_TRIGGERING_PORT	7
-
+#define TEST1_TRIGGERING_PORT	1
+#define TEST2_TRIGGERING_PORT	2
+#define TEST3_TRIGGERING_PORT	2

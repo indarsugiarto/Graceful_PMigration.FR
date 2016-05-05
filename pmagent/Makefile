@@ -113,5 +113,5 @@ $(BUILD_DIR)$(APP).o: $(APP).c
 
 clean:
 	@$(RM) $(BUILD_DIR)*
-
+	@$(RM) $(OUTPUT_DIR)$(APP).aplx
 

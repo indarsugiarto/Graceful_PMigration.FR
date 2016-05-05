@@ -42,6 +42,7 @@ typedef struct app_stub		// application holder
 /* forward declaration*/
 void triggerDemo1();
 void triggerDemo2();
+void printReport(uint arg0, uint arg1);
 
 sdp_msg_t *msg;
 uint myCoreID;
@@ -83,6 +84,13 @@ void hSDP(uint mBox, uint port)
 #elif (DEMO==2)
 		triggerDemo2();
 #endif
+	}
+	// Let's use:
+	// TEST1_TRIGGERING_PORT for get the supv status
+	// TEST2_TRIGGERING_PORT for ...
+	// TEST3_TRIGGERING_PORT for ...
+	else if(port==TEST1_TRIGGERING_PORT) {
+		spin1_schedule_callback(printReport, 0, 0, PRIORITY_SDP);
 	}
 	spin1_msg_free(msg);
 }
@@ -137,3 +145,17 @@ void triggerDemo2()
 {
 
 }
+
+void printReport(uint arg0, uint arg1)
+{
+	// basic ID report
+	io_printf(IO_STD, "supv core-ID = %d ( Please check if it is not 1! )\n", sark_core_id());
+	io_printf(IO_STD, "MAX_AVAIL_CORE = %d\n", MAX_AVAIL_CORE);
+	// report on sdram allocation
+	for(uint i=0; i<MAX_AVAIL_CORE; i++) {
+		io_printf(IO_STD, "\nCore-%d itcm_addr buffer = 0x%x\n", as[i].coreID, as[i].itcm_addr);
+		io_printf(IO_STD, "Core-%d dtcm_addr buffer = 0x%x\n", as[i].coreID, as[i].dtcm_addr);
+	}
+	io_printf(IO_STD, "-------- End of report ---------\n\n");
+}
+
