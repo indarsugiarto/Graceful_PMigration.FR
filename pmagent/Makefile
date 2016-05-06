@@ -1,7 +1,7 @@
 APP = pmagent
 
 # First, define SPINN_DIRS and the correct library
-SPINN_DIRS := ../../spinnaker_tools_pm/pmagents
+SPINN_DIRS := /opt/spinnaker_tools_134
 SPINN_TOOLS := $(SPINN_DIRS)/tools
 
 # Only sark and spin1_api use LIB=1, otherwise use LIB=0. Here, pmagent is an app, not lib
@@ -12,17 +12,16 @@ API := 1
 
 # Use spin1_api (1) or just sark (0)?
 ifeq ($(API),1)
-    LIBRARY := ../include/libspin1_api-pmagent.a
-    #LIBRARY := ../include/libspin1_api-pmapps.a
+    #LIBRARY := ../include/libspin1_api-pmagent.a
+    LIBRARY := $(SPINN_DIRS)/lib/libspin1_api.a
 else
-    LIBRARY := ../include/libsark-pmagent.a
-    #LIBRARY := ../include/libsark-pmapps.a
+    #LIBRARY := ../include/libsark-pmagent.a
+    LIBRARY := $(SPINN_DIRS)/lib/libsark.a
 endif
 
 # for supv, it is ok to use normal linker file
 # lnk files are: pmagent.lnk, app.lnk and sark.lnk
 SCRIPT = ../include/pmagent.lnk
-#SCRIPT = ../include/pmapp.lnk
 
 # List of objects making up the application. If there are other files
 # in the application, add their object file names to this variable.

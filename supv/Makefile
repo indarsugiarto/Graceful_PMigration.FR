@@ -15,13 +15,13 @@ ifndef API
 endif
 
 # First, define SPINN_DIRS and the correct library
-SPINN_DIRS := ../../spinnaker_tools_pm/ori_134
+SPINN_DIRS := /opt/spinnaker_tools_134
 SPINN_TOOLS := $(SPINN_DIRS)/tools
 
 ifeq ($(API),1)
-    LIBRARY := ../include/libspin1_api-ori.a
+    LIBRARY := $(SPINN_DIRS)/lib/libspin1_api.a
 else
-    LIBRARY := ../include/libsark-ori.a
+    LIBRARY := $(SPINN_DIRS)/lib/libsark.a
 endif
 
 ifndef GNUBIN

@@ -92,3 +92,6 @@ typedef struct app_stub		// application holder
 #define TEST1_TRIGGERING_PORT	1
 #define TEST2_TRIGGERING_PORT	2
 #define TEST3_TRIGGERING_PORT	2
+
+#define APP_ITCM_SIZE = 32*1024
+#define APP_DTCM_SIZE = 64*1024;

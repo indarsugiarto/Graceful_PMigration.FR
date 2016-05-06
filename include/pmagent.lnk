@@ -1,53 +1,76 @@
-/* NEW: Just for a test case, I allocate 8KB (0x2000) for code and 2KB (0x800) for data this example. */
+/* NEW: Just for a test case, I allocate 8KB (0x2000) for code and 2KB (0x800) 
+   for data this example.
 
-/* The following script proves that even with small size of data
+   The following script proves that even with small size of data
    (as reported by RW_DATA.bin), BUT with correct location of stack,
    the program runs correctly at "STUB" location.
    Conclusion: Mungkin HARUS ada space sekitar 2KB antara RW_DATA dan
    STACK. Karena jika RW_DATA dialokasikan 1KB dan STACK_TOP hanya 4KB
    dari DTCM_BASE (jadi STACK hanya berjarak 1KB dari RW_DATA), dia
    tidak berfungsi. Tapi jika diberi space 2KB, baru berfungsi.
-*/
 
-/* adopted from sark.lnk - GNU linker script for SARK/SpiNNaker applications
- * 1k = 1024 = 0x400
- * 2k = 2*1024 = 2048 = 0x800
- * 4k = 4*1024 = 4096 = 0x1000
- * 6k = 6*1024 = 6144 = 0x1800
- * 8k = 8*1024 = 8192 = 0x2000
- * STUB size = 8k
-*/
+   Size in hex:
+   1k = 1024 = 0x400
+   2k = 2*1024 = 2048 = 0x800
+   4k = 4*1024 = 4096 = 0x1000
+   6k = 6*1024 = 6144 = 0x1800
+   8k = 8*1024 = 8192 = 0x2000
+
+   STUB program size = 8k
+
+   What we want: stack size = 2KB = 0x800
+		 		 data size = 2KB = 0x800
+		 		 gap between stack and data = 1KB = 0x400
+   What we have: with base 0x400000, then if the stack_top is 
+				 0x400000 + 0x800(data) + 0x800(szStack) = 0x401000
+				 it DOESN'T work! It turns out that stack_top needs to be 
+				 0x401400 -> hence, the stack_base = 0x401400 - 0x800 = 0x400C00
 
 
-/* What we want: stack size = 2KB = 0x800
-		 data size = 2KB = 0x800
-		 gap between stack and data = 1KB = 0x400
-   What we have: with base 0x400000, then if the stack_top is 0x400000 + 0x800(data) + 0x800(szStack) = 0x401000
-		 it DOESN'T work! It turns out that stack_top needs to be 0x401400 -> hence, the stack_base = 0x401400 - 0x800 = 0x400C00
+   Note on 6 May, 17:50:
+   ---------------------
+   Di bagian MEMORY, origin dan length harus disesuaikan.
+   Kalo menggunakan nilai aslinya (sesuai di spinnaker.h), program bisa dicompile tapi tidak jalan
+   (board hang dan harus direset).
 */
 
 MEMORY
 {
-    /* ITCM : ORIGIN = 0, LENGTH = 0x7f00 */
-    /* ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000 */
-    ITCM : ORIGIN = 0x5F00, LENGTH = 0x1F00	/* 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM */
-						/* LENGTH bukan 0x2000, karena terpakai 0x100 untuk "Reserved" */
-    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800	/* Indar: 2KB of data, we don't put STACK in this memory definition */
+    /* 
+       Original values: 
+       ITCM : ORIGIN = 0, LENGTH = 0x7f00 
+       ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000 
+
+       Modification notes:
+	   ITCM origin: 7F00 - 2000 = 5F00, tidak termasuk reserved area di pucuk ITCM
+	   ITCM length: bukan 0x2000, karena terpakai 0x100 untuk "Reserved" 
+	   Untuk data dan stack: 2KB of data, we don't put STACK in this memory definition 
+    */
+
+    ITCM : ORIGIN = 0x5F00, LENGTH = 0x1F00	
+    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800
 }
 
 
 SECTIONS
 {
-    ITCM_BASE = 0x5F00;		/* with 8K (0x2000) of .text = 0x7F00 - 0x2000 = 0x5F00, where "Reserved" is at 0x1F00 to 0x2000 */
+	/* Implementation notes:
+	   with 8K (0x2000) of .text = 0x7F00 - 0x2000 = 0x5F00, where "Reserved" is at 0x1F00 to 0x2000
+
+	   regarding STACK_TOP:
+	   5KB above the DTCM_BASE, where the data is only 2KB -> hence it seems that it needs a gap 1KB. Why??? 
+	*/
+    ITCM_BASE = 0x5F00;	
     DTCM_BASE = 0x00400000;
 
     /* STACK_TOP = 0x00410000; -> this is the original */
     /* STACK_TOP = 0x00401000; -> DOESN'T WORK: 4KB above the DTCM_BASE, where the data is only 1KB */
-    STACK_TOP = 0x00401400;	/* OK: 5KB above the DTCM_BASE, where the data is only 2KB -> hence it seems that it needs a gap 1KB. Why??? */
-    STACK_SIZE = 0x800;         /* 2KB of stack */
-    /* Hence, STACK_BASE = 0x400C00 */
+    /* STACK_TOP = 0x00401400; -> DOES WORK, tapi coba aku turunkan (lihat di bawah!) */
+    STACK_SIZE = 0x800;
 
     /* TODO: coba lagi nanti stack-nya diturunkan !!!*/
+	/* Hasil: BERFUNGSI tuh!!! */
+	STACK_TOP = 0x00401000;
 
     APLX_SIZE = 64;
     APLX_ENTRY = 16;

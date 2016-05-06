@@ -1,5 +1,11 @@
+Ide semula:
 *.lnk are linker scripts
 pmapp-spinnaker.h is the modified spinnaker.h that will be linked
 by ../spinnaker_tools_pm/pmapps
 pmagent-spinnaker.h is the modified spinnaker.h that will be linked
 by ../spinnaker_tools_pm/pmagents
+
+
+Tapi setelah aku coba lagi dengan libsark.a dan libspin1_api.a
+yang asli, pmagent maupun pmapp kok bisa berjalan ya?
+

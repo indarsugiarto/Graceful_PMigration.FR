@@ -43,6 +43,8 @@ typedef struct app_stub		// application holder
 void triggerDemo1();
 void triggerDemo2();
 void printReport(uint arg0, uint arg1);
+/* test scenarios */
+void test2(uint arg0, uint arg1);
 
 sdp_msg_t *msg;
 uint myCoreID;
@@ -92,6 +94,9 @@ void hSDP(uint mBox, uint port)
 	else if(port==TEST1_TRIGGERING_PORT) {
 		spin1_schedule_callback(printReport, 0, 0, PRIORITY_SDP);
 	}
+	else if(port==TEST2_TRIGGERING_PORT) {
+		spin1_schedule_callback(test2, 0, 0, PRIORITY_SDP);
+	}
 	spin1_msg_free(msg);
 }
 
@@ -108,10 +113,12 @@ void hFR(uint key, uint payload)
 		key = KEY_SUPV_REPLY_ITCMSTG;
 		payload = (uint)as[sender-2].itcm_addr;
 		spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+		io_printf(IO_BUF, "ITCMSTG 0x%x was sent to core-%d\n", payload, sender);
 		// second, send the DTCMSTG
 		key = KEY_SUPV_REPLY_DTCMSTG;
 		payload = (uint)as[sender-2].dtcm_addr;
 		spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+		io_printf(IO_BUF, "DTCMSTG 0x%x was sent to core-%d\n", payload, sender);
 		rtr_fr_set(0);	// reset FR register
 		return;
 	}
@@ -159,3 +166,22 @@ void printReport(uint arg0, uint arg1)
 	io_printf(IO_STD, "-------- End of report ---------\n\n");
 }
 
+/* Test scenarios */
+/* test2:
+ * - send TCMSTG to pmagent on core-2
+ */
+void test2(uint arg0, uint arg1)
+{
+	ushort pmagentCore  = 2;
+	uint key, payload, newRoute = 1 << (pmagentCore+6);	// NOTE: core-1 is used for supv
+	rtr_fr_set(newRoute);
+	// first, send the ITCMSTG
+	key = KEY_SUPV_TRIGGER_ITCMSTG;
+	payload = (uint)as[pmagentCore-2].itcm_addr;
+	spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+	// second, send the DTCMSTG
+	key = KEY_SUPV_TRIGGER_DTCMSTG;
+	payload = (uint)as[pmagentCore-2].dtcm_addr;
+	spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+	rtr_fr_set(0);	// reset FR register
+}

@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += \
     pmagent.c
 
-INCLUDEPATH += /opt/spinnaker_tools_134/include
+INCLUDEPATH += ../../spinnaker_tools_pm/pmagents/include
 
 DISTFILES += \
     pmagent.lnk \
