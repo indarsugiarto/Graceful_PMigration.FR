@@ -8,8 +8,15 @@
 
 #define USE_SARK		0
 #define USE_API			1
-#define DMA_TRANSFER_ITCM_ID	14		// magic number. Note, the DMA transfer ID is only 6-bits
-#define DMA_TRANSFER_DTCM_ID	41
+/*
+ * Regarding DMA operation in spin1_api:
+ *  uint *system_address: system NOC address of the transfer
+ *  uint *tcm_address: processor TCM address of the transfer
+ *  uint direction: 0 = transfer to TCM (==DMA_READ), 1 = transfer to system (==DMA_WRITE)
+ *  uint length: length of transfer in bytes
+ * */
+#define DMA_TRANSFER_ITCM_TAG	14		// magic number. Note, the DMA transfer ID is only 6-bits
+#define DMA_TRANSFER_DTCM_TAG	41
 #define DMA_DWORD		1		// 0 = word, 1 = double word
 #define DMA_BURST		16		// valid values: 1, 2, 4, 8, 16. So, let's try as fast as possible
 #define DEF_SDP_TIMEOUT		10
@@ -23,21 +30,17 @@
 /**************************************************** Linker Setup ******************************************************/
 // the following definitions must match the linker scripts: pmagent.lnk, app.lnk (supv uses normal sark.lnk)
 #define RESERVED_ITCM_TOP_SIZE		0x100			// this is reserved area on top of 32KB ITCM used by sark for app loading & system function
-#define STUB_DATA_BASE			0x00000000
-#define STUB_DATA_SIZE			0x800			// 2KB is enough?
-#define STUB_STACK_TOP			0x00401400;		// OK: 5KB above the DTCM_BASE, where the data is only 1KB
-								// it's supposed to be 0x800 + 0x800 = 0x1000, but somehow it doesn't work!
-								// but it works with additional 1K, so stack top address = 0x800 + 0x800 + 0x400 = 0x1400
+#define STUB_DTCM_BASE			0x00400000
+#define STUB_DTCM_SIZE			0x800			// see linker script for detail
+#define STUB_STACK_TOP			0x00401000;
 #define STUB_STACK_SIZE			0x800;			// 2KB of stack
+#define STUB_ITCM_SIZE			0x2000			// = 8192 (8KB), the current stub in aplx format
+#define STUB_ITCM_BASE			0x5F00
 
-#define STUB_PROG_SIZE			0x2000			// = 8192 (8KB), the current stub in aplx format
-#define STUB_PROG_BASE			0x5F00
-
-#define APP_PROG_SIZE			0x5F00			// = 0x8000 - 0x2000 - 0x100 = ITCM_SIZE - STUB_PROG_SIZE - RESERVED_ITCM_TOP_SIZE
-#define APP_PROG_BASE			0x00000000
-#define APP_DTCM_BASE			0x00401800		// normal DTCM_BASE 0x00400000
-								// but here, I put 1K above the sub_stack_top (0x1400 + 0x400)
-#define APP_DATA_SIZE			0xE000			// = 0x40f800 - 0x401800 = LOKASI_DIBAWAH_STACK - LOKASI_AWAL_APP_DTCM
+#define APP_ITCM_SIZE			0x5F00			// = 0x8000 - 0x2000 - 0x100 = ITCM_SIZE - STUB_PROG_SIZE - RESERVED_ITCM_TOP_SIZE
+#define APP_ITCM_BASE			0x00000000
+#define APP_DTCM_BASE			0x00401400
+#define APP_DTCM_SIZE			0xEC00			// = 0x40f800 - 0x401800 = LOKASI_DIBAWAH_STACK - LOKASI_AWAL_APP_DTCM
 #define APP_STACK_SIZE			0x800			// the same value as usual
 #define APP_STACK_TOP			0x00410000
 /*************************************************************************************************************************/
@@ -93,5 +96,5 @@ typedef struct app_stub		// application holder
 #define TEST2_TRIGGERING_PORT	2
 #define TEST3_TRIGGERING_PORT	2
 
-#define APP_ITCM_SIZE = 32*1024
-#define APP_DTCM_SIZE = 64*1024;
+#define PMAPP_ITCM_SIZE		0x5F00		// according to pmapp.lnk
+#define PMAPP_DTCM_SIZE		0xE000

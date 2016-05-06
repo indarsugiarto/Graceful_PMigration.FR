@@ -13,6 +13,7 @@ uint *itcm_addr;
 uint *dtcm_addr;
 
 uchar TCMSTGcntr;
+uint dmaITCMid, dmaDTCMid;
 
 void hTimer(uint tick, uint null)
 {
@@ -31,10 +32,22 @@ void hTimer(uint tick, uint null)
 	}
 }
 
+// TODO: Sampai 6 Mei, 19:00 DMA belum bekerja dengan benar!
+
+void hDMA(uint id, uint tag)
+{
+	io_printf(IO_STD, "dma id-%d, tag-%d",id,tag);
+}
+
 // storeTCM() will call dma for storing ITCM and DTCM
 void storeTCM(uint arg0, uint arg1)
 {
-
+	io_printf(IO_STD, "Calling dma for ITCM...\n");
+	dmaITCMid = spin1_dma_transfer(DMA_TRANSFER_ITCM_TAG, (void *)itcm_addr,
+								   (void *)APP_ITCM_BASE, DMA_WRITE, APP_ITCM_SIZE);
+	io_printf(IO_STD, "Calling dma for ITCM...\n");
+	dmaDTCMid = spin1_dma_transfer(DMA_TRANSFER_DTCM_TAG, (void *)dtcm_addr,
+								   (void *)APP_DTCM_BASE, DMA_WRITE, APP_DTCM_SIZE);
 }
 
 void hFR(uint key, uint payload)
@@ -66,5 +79,6 @@ void c_main (void)
     spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
     spin1_callback_on(TIMER_TICK, hTimer, TIMER_PRIORITY);
 	spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, PRIORITY_FR);
+	spin1_callback_on(DMA_TRANSFER_DONE, hDMA, PRIORITY_DMA);
     spin1_start(SYNC_NOWAIT);
 }

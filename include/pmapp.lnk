@@ -38,19 +38,19 @@ MEMORY
 {
 	/*
 	   Indar: stub-itcm stays from 0x5F00 to 0x7F00
-	   Indar: stub-dtcm stays from 0x400000 to 0x401800, including stack
-	   hence, DTCM length will be: 0x40f800 - 0x401800 = 0xE000
+	   Indar: stub-dtcm stays from 0x400000 to 0x401400, including stack
+	   hence, DTCM length will be: 0x410000 - 0x401400 = 0xEC00
 	*/
     ITCM : ORIGIN = 0, LENGTH = 0x5F00
-    DTCM : ORIGIN = 0x401800, LENGTH = 0xE000
+    DTCM : ORIGIN = 0x401400, LENGTH = 0xEC00
 }
 
 
 SECTIONS
 {
     ITCM_BASE = 0x00000000;
-    DTCM_BASE = 0x00401800;		/* ada jeda 1KB (0x400) di atas STACK_TOP dari pmagent */
-								/* STACK_TOP dari pmagent ada di 0x401400 */
+    DTCM_BASE = 0x00401400;		/* ada jeda 1KB (0x400) di atas STACK_TOP dari pmagent */
+					/* STACK_TOP dari pmagent ada di 0x401000 */
     STACK_TOP = 0x00410000;		/* As the original definition in sark.lnk for normal spinnaker apps */
     STACK_SIZE = 0x800;
 

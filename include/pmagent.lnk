@@ -47,8 +47,8 @@ MEMORY
 	   Untuk data dan stack: 2KB of data, we don't put STACK in this memory definition 
     */
 
-    ITCM : ORIGIN = 0x5F00, LENGTH = 0x1F00	
-    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800
+    ITCM : ORIGIN = 0x5F00, LENGTH = 0x2000
+    DTCM : ORIGIN = 0x400000, LENGTH = 0x1000
 }
 
 
@@ -69,8 +69,8 @@ SECTIONS
     STACK_SIZE = 0x800;
 
     /* TODO: coba lagi nanti stack-nya diturunkan !!!*/
-	/* Hasil: BERFUNGSI tuh!!! */
-	STACK_TOP = 0x00401000;
+    /* Hasil: BERFUNGSI tuh!!! */
+    STACK_TOP = 0x00401000;
 
     APLX_SIZE = 64;
     APLX_ENTRY = 16;

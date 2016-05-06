@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += \
     helloW.c
 
-INCLUDEPATH += ../../../spinnaker_tools_pm/pmapps/include
+INCLUDEPATH += /opt/spinnaker_tools_134/include
 
 DISTFILES += \
     Makefile \

@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += \
     supv.c
 
-INCLUDEPATH += ../../spinnaker_tools_pm/ori_134/include
+INCLUDEPATH += /opt/spinnaker_tools_134/include
 
 DISTFILES += \
     Makefile \

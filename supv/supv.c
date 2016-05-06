@@ -56,7 +56,7 @@ void initAppStub()
 {
 	uchar i;
     // then allocate SDRAM to hold TCM for pmagent
-	uint szTCM = (APP_PROG_SIZE+APP_DATA_SIZE)*MAX_AVAIL_CORE; //ITCM+DTCM for all MAX_AVAIL_CORE cores
+	uint szTCM = (APP_ITCM_SIZE+APP_DTCM_SIZE)*MAX_AVAIL_CORE; //ITCM+DTCM for all MAX_AVAIL_CORE cores
 	uint *sdram_addr = (uint *)sark_xalloc(sv->sdram_heap, szTCM, SUPERVISOR_APP_ID, ALLOC_LOCK);
 	if(sdram_addr==NULL) {
 		io_printf(IO_STD, "Fatal Error: SDRAM allocation for TCM storage!\n");
@@ -65,8 +65,8 @@ void initAppStub()
     else {
         io_printf(IO_BUF, "Allocating TCMSTD at 0x%x\n", sdram_addr);
         // then assign each TCM buffer accordingly
-		// each TCM is composed of ITCM (32*1024) and DTCM (64*1024)
-		uint szITCM = 32*1024, szDTCM = 64*1024;
+		// each TCM is composed of ITCM (0x5F00) and DTCM (0xE000)
+		uint szITCM = PMAPP_ITCM_SIZE, szDTCM = PMAPP_DTCM_SIZE;
 		uint *ptr = sdram_addr;
         for(i=0; i<MAX_AVAIL_CORE; i++) {
             as[i].coreID = i+2;	// since we assume supv is in core-1
