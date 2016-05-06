@@ -2,7 +2,8 @@ APP = helloW
 
 # for supv, it is ok to use normal linker file
 # lnk files are: sark, app.lnk and pmagent.lnk
-SCRIPT = ../../include/pmapp.lnk
+#SCRIPT = ../../include/pmapp.lnk
+SCRIPT = ../../include/supv.lnk
 
 # List of objects making up the application. If there are other files
 # in the application, add their object file names to this variable.

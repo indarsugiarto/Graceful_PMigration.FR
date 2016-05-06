@@ -15,6 +15,12 @@ uint *dtcm_addr;
 uchar TCMSTGcntr;
 uint dmaITCMid, dmaDTCMid;
 
+//------------- for simple dma testing ---------------
+uint dataBuffer[100];
+uint *testBuffer;
+uint testDMAid;
+//----------------------------------------------------
+
 void hTimer(uint tick, uint null)
 {
 	if(tick<5) {
@@ -42,12 +48,31 @@ void hDMA(uint id, uint tag)
 // storeTCM() will call dma for storing ITCM and DTCM
 void storeTCM(uint arg0, uint arg1)
 {
-	io_printf(IO_STD, "Calling dma for ITCM...\n");
+    io_printf(IO_STD, "Calling dma for ITCM...");
 	dmaITCMid = spin1_dma_transfer(DMA_TRANSFER_ITCM_TAG, (void *)itcm_addr,
 								   (void *)APP_ITCM_BASE, DMA_WRITE, APP_ITCM_SIZE);
-	io_printf(IO_STD, "Calling dma for ITCM...\n");
+    if(dmaITCMid!=0)
+        io_printf(IO_STD, "done!\n");
+    else
+        io_printf(IO_STD, "fail!\n");
+    io_printf(IO_STD, "Calling dma for DTCM...");
 	dmaDTCMid = spin1_dma_transfer(DMA_TRANSFER_DTCM_TAG, (void *)dtcm_addr,
 								   (void *)APP_DTCM_BASE, DMA_WRITE, APP_DTCM_SIZE);
+    if(dmaDTCMid!=0)
+        io_printf(IO_STD, "done!\n");
+    else
+        io_printf(IO_STD, "fail!\n");
+}
+
+void testSimpleDMA(uint arg0, uint arg1)
+{
+    io_printf(IO_STD, "Calling dma for test...");
+    testDMAid = spin1_dma_transfer(0xc0bac0ba, (void *)testBuffer, (void *)dataBuffer,
+                                   DMA_WRITE, 100*sizeof(uint));
+    if(testDMAid!=0)
+        io_printf(IO_STD, "done!\n");
+    else
+        io_printf(IO_STD, "fail!\n");
 }
 
 void hFR(uint key, uint payload)
@@ -66,7 +91,8 @@ void hFR(uint key, uint payload)
 		io_printf(IO_STD, "DTCMSTG = 0x%x\n", dtcm_addr);
 	}
 	if(TCMSTGcntr==2)
-		spin1_schedule_callback(storeTCM, 0, 0, PRIORITY_DMA);
+        //spin1_schedule_callback(storeTCM, 0, 0, PRIORITY_DMA);
+        spin1_schedule_callback(testSimpleDMA, 0, 0, PRIORITY_DMA);
 }
 
 void c_main (void)
@@ -74,7 +100,21 @@ void c_main (void)
 	myCoreID = sark_core_id();
 	TCMSTGcntr = 0;	// 2 means both ITCMSTG and DTCMSTG are available
 
-	io_printf(IO_STD, "Starting of c_main at 0x%x\n\n", c_main); sark_delay_us(1000);
+    io_printf(IO_STD, "Starting of c_main at 0x%x\n\n", c_main);
+
+    //-------------- generate data test for dma and allocate sdram for testing -------------
+    io_printf(IO_STD, "Allocating sdram...");
+    sark_srand ((sark_chip_id () << 8) + sark_core_id() * sv->time_ms);
+    for(ushort i=0; i<100; i++)
+        dataBuffer[i] = sark_rand();
+    testBuffer = sark_xalloc(sv->sdram_heap, 100*sizeof(uint), sark_app_id(), ALLOC_LOCK);
+    if(testBuffer==NULL) {
+        io_printf(IO_STD, "xalloc error!\n");
+        rt_error(RTE_ABORT);
+    }
+    else
+        io_printf(IO_STD, "done!\n");
+    //--------------------------------------------------------------------------------------
 
     spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
     spin1_callback_on(TIMER_TICK, hTimer, TIMER_PRIORITY);
