@@ -21,13 +21,20 @@ uint *testBuffer;
 uint testDMAid;
 //----------------------------------------------------
 
+// forward declaration
+//void testSimpleDMA(uint arg0, uint arg1);
+
+// ----------------------------- Implementations -----------------------------
 void hTimer(uint tick, uint null)
 {
 	if(tick<5) {
-		io_printf(IO_STD, "Hello from core-%d with appID-%d\n", sark_core_id(), sark_app_id());
+		io_printf(IO_STD, "%d-s before action!\n", 5-tick);
+		//io_printf(IO_STD, "Hello from core-%d with appID-%d\n", sark_core_id(), sark_app_id());
 		return;
 	}
 	if(tick==5) {
+                //spin1_schedule_callback(testSimpleDMA, 0, 0, PRIORITY_DMA);
+
 		io_printf(IO_STD, "Requesting TCMSTG...\n");
 		uint key, route;
 		route = 1 << SUPV_CORE_IDX;
@@ -35,6 +42,7 @@ void hTimer(uint tick, uint null)
 		rtr_fr_set(route);
 		spin1_send_fr_packet(key, 0, WITH_PAYLOAD);
 		rtr_fr_set(0);
+
 	}
 }
 
@@ -42,7 +50,7 @@ void hTimer(uint tick, uint null)
 
 void hDMA(uint id, uint tag)
 {
-	io_printf(IO_STD, "dma id-%d, tag-%d",id,tag);
+	io_printf(IO_STD, "dma id-%d, tag-0x%x\n",id,tag);
 }
 
 // storeTCM() will call dma for storing ITCM and DTCM
@@ -92,7 +100,7 @@ void hFR(uint key, uint payload)
 	}
 	if(TCMSTGcntr==2)
         //spin1_schedule_callback(storeTCM, 0, 0, PRIORITY_DMA);
-        spin1_schedule_callback(testSimpleDMA, 0, 0, PRIORITY_DMA);
+        	spin1_schedule_callback(testSimpleDMA, 0, 0, PRIORITY_DMA);
 }
 
 void c_main (void)
@@ -100,7 +108,7 @@ void c_main (void)
 	myCoreID = sark_core_id();
 	TCMSTGcntr = 0;	// 2 means both ITCMSTG and DTCMSTG are available
 
-    io_printf(IO_STD, "Starting of c_main at 0x%x\n\n", c_main);
+    io_printf(IO_STD, "Starting of c_main at 0x%x with base itcm at 0x%x and base dtcm at 0x%x\n\n", c_main, APP_ITCM_BASE, APP_DTCM_BASE);
 
     //-------------- generate data test for dma and allocate sdram for testing -------------
     io_printf(IO_STD, "Allocating sdram...");
@@ -118,7 +126,7 @@ void c_main (void)
 
     spin1_set_timer_tick(TIMER_TICK_PERIOD_US);
     spin1_callback_on(TIMER_TICK, hTimer, TIMER_PRIORITY);
-	spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, PRIORITY_FR);
-	spin1_callback_on(DMA_TRANSFER_DONE, hDMA, PRIORITY_DMA);
+    spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, PRIORITY_FR);
+    spin1_callback_on(DMA_TRANSFER_DONE, hDMA, PRIORITY_DMA);
     spin1_start(SYNC_NOWAIT);
 }
