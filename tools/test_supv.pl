@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-##------------------------------------------------------------------------------
+##-----------------------------------------------------------------
 ## Modified from sdp_ping.pl
-##------------------------------------------------------------------------------
+##-----------------------------------------------------------------
 
 
 use strict;
@@ -19,9 +19,12 @@ my $port;		# SpiNNaker app. port
 sub process_args
 {
     die "usage: ./test_supv <hostname> <chipX> <chipY> <CPU> <port>\n" . 
-	"where:\n-port=1 for printReport\n-port=2 for testing FR communication with stub\n" .
-        "-port=3 for...\n" unless
-	$#ARGV == 4 &&	$ARGV[1] =~ /^\d+$/ &&	$ARGV[2] =~ /^\d+$/ &&	$ARGV[3] =~ /^\d+$/ &&	$ARGV[4] =~ /^\d+$/;
+    "where:\n-port=1 for printReport\n" . 
+    "-port=2 for testing FR with stub\n" .
+    "-port=3 for...\n" . 
+    "-port=7 for helloW/pingpong\n" unless
+    $#ARGV == 4 &&	$ARGV[1] =~ /^\d+$/ &&	$ARGV[2] =~ /^\d+$/ &&	
+    $ARGV[3] =~ /^\d+$/ &&	$ARGV[4] =~ /^\d+$/;
 
     $spin = SpiNN::SCP->new (target => $ARGV[0]);
     die "Failed to connect to $ARGV[0]\n" unless $spin;
@@ -39,4 +42,4 @@ sub main
 
 main ();
 
-#------------------------------------------------------------------------------
+#----------------------------------------------------------------------

@@ -87,6 +87,8 @@ The ideas:
 2. We can specify "key" field for signalling.
    Ex: SUPV_SEND_START_SIGNAL, STUB_SEND_TCM_ALLOC, etc.
    The key contains data with format: [sender_in_higher_part, signal_in_lower_part]
+3. And we can use the payload to carry the information, e.g. the DTCM/ITCM address
+
 _____________________________________________________ Regarding FR on stub & supv ____
 
 

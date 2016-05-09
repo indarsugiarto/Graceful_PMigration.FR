@@ -40,7 +40,7 @@
 #define APP_ITCM_SIZE			0x5F00			// = 0x8000 - 0x2000 - 0x100 = ITCM_SIZE - STUB_PROG_SIZE - RESERVED_ITCM_TOP_SIZE
 #define APP_ITCM_BASE			0x00000000
 #define APP_DTCM_BASE			0x00401400
-#define APP_DTCM_SIZE			0xEC00			// = 0x40f800 - 0x401800 = LOKASI_DIBAWAH_STACK - LOKASI_AWAL_APP_DTCM
+#define APP_DTCM_SIZE			0xEC00			// = 0x410000 - 0x401400 = LOKASI_STACK_TOP - LOKASI_AWAL_APP_DTCM
 #define APP_STACK_SIZE			0x800			// the same value as usual
 #define APP_STACK_TOP			0x00410000
 /*************************************************************************************************************************/
@@ -86,6 +86,7 @@ typedef struct app_stub		// application holder
 #define KEY_APP_SEND_AJMP		0x48FE		// regularly (during checkpointing), app cores will send this start jump address
 #define KEY_SUPV_TRIGGER_ITCMSTG	0x1234		// supv send ITCM location to a pmagent
 #define KEY_SUPV_TRIGGER_DTCMSTG	0x5678		// supv send DTCM location to a pmagent
+#define KEY_SUPV_PING_PMAGENT		0x7189		// supv send a ping to a pmagent
 
 // for application examples and demonstration purpose:
 #define PINGER_CORE		2
