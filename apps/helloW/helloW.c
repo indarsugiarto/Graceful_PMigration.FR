@@ -11,6 +11,7 @@ uint myCoreID;
 
 uint *itcm_addr;
 uint *dtcm_addr;
+uint ajmp;
 
 uchar TCMSTGcntr;
 uint dmaITCMid, dmaDTCMid;
@@ -47,7 +48,7 @@ void hTimer(uint tick, uint null)
 	// otherwise, do checkpointing...
 	else {
 		if(readyCheckPointing==1) {
-			io_printf(IO_STD, "[helloW] checkpointing...\n");
+			io_printf(IO_BUF, "[helloW] checkpointing %d...\n", tick-5);
 			spin1_schedule_callback(storeTCM, 0, 0, PRIORITY_DMA);
 		}
 		else {
@@ -60,6 +61,7 @@ void hTimer(uint tick, uint null)
 
 void hDMA(uint id, uint tag)
 {
+	return;
 	if(tag==DMA_TRANSFER_ITCM_TAG)
 		io_printf(IO_BUF, "[helloW] ITCM done!\n");
 	else if(tag==DMA_TRANSFER_DTCM_TAG)
@@ -74,17 +76,30 @@ void storeTCM(uint arg0, uint arg1)
 	io_printf(IO_BUF, "[helloW] Calling dma for ITCM...");
 	dmaITCMid = spin1_dma_transfer(DMA_TRANSFER_ITCM_TAG, (void *)itcm_addr,
 								   (void *)APP_ITCM_BASE, DMA_WRITE, APP_ITCM_SIZE);
-    if(dmaITCMid!=0)
+	if(dmaITCMid!=0)
 		io_printf(IO_BUF, "done!\n");
     else
 		io_printf(IO_BUF, "fail!\n");
 	io_printf(IO_BUF, "[helloW] Calling dma for DTCM...");
 	dmaDTCMid = spin1_dma_transfer(DMA_TRANSFER_DTCM_TAG, (void *)dtcm_addr,
 								   (void *)APP_DTCM_BASE, DMA_WRITE, APP_DTCM_SIZE);
-    if(dmaDTCMid!=0)
+	if(dmaDTCMid!=0)
 		io_printf(IO_BUF, "done!\n");
     else
 		io_printf(IO_BUF, "fail!\n");
+
+	// send AJMP to supv
+	io_printf(IO_BUF, "[helloW] sending AJMP 0x%x\n", ajmp);
+	uint key, route, payload;
+	route = 1 << SUPV_CORE_IDX;
+	rtr_fr_set(route);
+	key = (myCoreID << 16) + KEY_APP_SEND_AJMP;
+	payload = ajmp;
+	spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+	// and stack pointer?
+	key = (myCoreID << 16) + KEY_APP_SEND_SPTR;
+
+	rtr_fr_set(0);
 }
 
 void hFR(uint key, uint payload)
@@ -115,6 +130,7 @@ void hFR(uint key, uint payload)
 void c_main (void)
 {
 	myCoreID = sark_core_id();
+	ajmp = (uint)c_main;	// just a test
 	readyCheckPointing = 0;	// 0 means not n0t ready, 1 means read1
 	TCMSTGcntr = 0;	// 2 means both ITCMSTG and DTCMSTG are available
 

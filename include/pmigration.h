@@ -56,7 +56,8 @@ typedef struct app_stub		// application holder
     //uint *tcm_addr;
     uint *itcm_addr;
     uint *dtcm_addr;
-    uint *restart_addr;
+    uint restart_addr;
+    uint stack_ptr;
     // uint registers[];	// should hold all registers of the microprocessors?
 } app_stub_t;
 
@@ -84,8 +85,10 @@ typedef struct app_stub		// application holder
 #define KEY_SUPV_REPLY_ITCMSTG		0x46FE		// supv reply with ITCM storage in SDRAM
 #define KEY_SUPV_REPLY_DTCMSTG		0x47FE		// supv reply with DTCM storage in SDRAM
 #define KEY_APP_SEND_AJMP		0x48FE		// regularly (during checkpointing), app cores will send this start jump address
+#define KEY_APP_SEND_SPTR		0x49FE		// and stack pointer as well
 #define KEY_SUPV_TRIGGER_ITCMSTG	0x1234		// supv send ITCM location to a pmagent
 #define KEY_SUPV_TRIGGER_DTCMSTG	0x5678		// supv send DTCM location to a pmagent
+#define KEY_SUPV_TRIGGER_AJMP		0x9ABC		// supv send AJMP location to a pmagent
 #define KEY_SUPV_PING_PMAGENT		0x7189		// supv send a ping to a pmagent
 
 // for application examples and demonstration purpose:

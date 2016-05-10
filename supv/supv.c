@@ -137,7 +137,7 @@ void hFR(uint key, uint payload)
 		return;
 	}
 	if(sType==KEY_APP_SEND_AJMP) {
-		as[sender-2].restart_addr = (uint *)payload;
+		as[sender-2].restart_addr = payload;
 	}
 }
 
@@ -161,7 +161,7 @@ void triggerDemo1()
 {
 	io_printf(IO_STD, "[supv] Will do helloW assuming helloW is running...\n");
 
-	// TODO: tell stub the location of itcm and dtcm
+	// tell stub the location of itcm and dtcm
 	uint newRoute = 1 << (STUB_TARGET_CORE+6);			// NOTE: core-1 is used for supv
 	uint key = KEY_SUPV_TRIGGER_ITCMSTG;				// first, itcm
 	uint payload = (uint)as[HELLOW_CORE-2].itcm_addr;
@@ -174,7 +174,17 @@ void triggerDemo1()
 	payload = (uint)as[HELLOW_CORE-2].dtcm_addr;
 	spin1_send_fr_packet(key, payload, WITH_PAYLOAD);	// send!
 	io_printf(IO_BUF, "[supv] DTCMSTG 0x%x was sent to core-%d\n", payload, STUB_TARGET_CORE);
-	rtr_fr_set(0);										// reset FR register
+
+	// tell stub about the ajmp
+	key = KEY_SUPV_TRIGGER_AJMP;
+	key += (myCoreID << 16);
+	payload = (uint)as[HELLOW_CORE-2].restart_addr;
+	spin1_send_fr_packet(key, payload, WITH_PAYLOAD);
+
+	// and stack pointer?
+
+	// reset FR register
+	rtr_fr_set(0);
 }
 
 void triggerDemo2()
