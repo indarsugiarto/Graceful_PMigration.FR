@@ -79,11 +79,13 @@ endif
 	@$(LS) $(OUTPUT_DIR)$(APP).aplx
 
 # Build the ELF file
-$(APP).elf: $(BUILD_DIR)$(OBJECTS) $(SCRIPT) $(LIBRARY) 
+#$(APP).elf: $(BUILD_DIR)$(OBJECTS) $(SCRIPT) $(LIBRARY)
+$(APP).elf: $(addprefix $(BUILD_DIR),$(OBJECTS)) $(SCRIPT) $(LIBRARY)
 	@$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS)/mkbuild $(APP) > $(BUILD_DIR)sark_build.c
 	$(CC) $(BUILD_DIR)sark_build.c -o $(BUILD_DIR)sark_build.o
-	$(LD) $(LFLAGS) $(BUILD_DIR)$(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARY) -o $(BUILD_DIR)$(APP).elf
+	#$(LD) $(LFLAGS) $(BUILD_DIR)$(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARY) -o $(BUILD_DIR)$(APP).elf
+	$(LD) $(LFLAGS) $(addprefix $(BUILD_DIR),$(OBJECTS)) $(BUILD_DIR)sark_build.o $(LIBRARY) -o $(BUILD_DIR)$(APP).elf
 	$(OD) $(BUILD_DIR)$(APP).elf
 
 

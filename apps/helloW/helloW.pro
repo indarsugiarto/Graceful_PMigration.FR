@@ -4,7 +4,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-    helloW.c
+    helloW.c \
+    addon.c
 
 INCLUDEPATH += /opt/spinnaker_tools_134/include
 

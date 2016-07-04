@@ -7,7 +7,7 @@ SCRIPT = ../../include/pmapp.lnk
 
 # List of objects making up the application. If there are other files
 # in the application, add their object file names to this variable.
-OBJECTS = $(APP).o
+OBJECTS = $(APP).o addon.o
 
 # Only sark and spin1_api use LIB=1, otherwise use LIB=0
 LIB := 0
@@ -18,11 +18,15 @@ API := 1
 
 include ../Makefile.common
 
+OUTPUT_DIR := ../../binaries/
+
+all: $(APP).aplx
+
 # If there are other files that need to be built first, put them here:
 # $(BUILD_DIR)whatever.o: whatever.c
 #	$(MKDIR) $(BUILD_DIR)
 #	$(CC) $(CFLAGS) whatever.c -o $(BUILD_DIR)whatever.o
 
-OUTPUT_DIR := ../../binaries/
-
-all: $(APP).aplx
+$(BUILD_DIR)addon.o: addon.c
+	$(MKDIR) $(BUILD_DIR)
+	$(CA) $(CFLAGS) addon.c -o $(BUILD_DIR)addon.o

@@ -10,4 +10,4 @@ all: $(DIRS)
 
 clean: $(DIRS)
 	@for d in $(DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
-	@$(RM) binaries/*
+	@$(RM) binaries/*.aplx

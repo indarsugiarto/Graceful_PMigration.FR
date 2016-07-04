@@ -27,7 +27,8 @@
 #define PRIORITY_TIMER		2	// useful for checkpointing?
 // NOTE:for all scheduled callback, if priority <=0, it produces weird behavior on spin1_schedule_callback
 
-/**************************************************** Linker Setup ******************************************************/
+/*********************Allocating TCMSTD at 0x60640014
+******************************* Linker Setup ******************************************************/
 // the following definitions must match the linker scripts: pmagent.lnk, app.lnk (supv uses normal sark.lnk)
 #define RESERVED_ITCM_TOP_SIZE		0x100			// this is reserved area on top of 32KB ITCM used by sark for app loading & system function
 #define STUB_DTCM_BASE			0x00400000
@@ -56,12 +57,11 @@ typedef struct app_stub		// application holder
     //uint *tcm_addr;
     uint *itcm_addr;
     uint *dtcm_addr;
-    uint restart_addr;
-    uint stack_ptr;
+    uint restart_addr;		// will be the PC?
+    uint stack_ptr;		// SP or r13
     // uint registers[];	// should hold all registers of the microprocessors?
 } app_stub_t;
 
-#endif
 
 /* This is the old MCPL-based signalling name
 // key modifier (for every "00", replace according to ccssiiyy format above):
@@ -79,17 +79,22 @@ typedef struct app_stub		// application holder
 */
 
 /* FR-based signalling name
- * for stub, FR might contains "key" field. Use it for signaling
+ * for stub, FR might contains "key" field. Use it for signaling.
+ * The upper part of the key is the core-ID, while the lower part is the signaling below:
  */
 #define KEY_APP_ASK_TCMSTG		0x45FE		// a pmagent send a request for TCM storage in SDRAM
 #define KEY_SUPV_REPLY_ITCMSTG		0x46FE		// supv reply with ITCM storage in SDRAM
 #define KEY_SUPV_REPLY_DTCMSTG		0x47FE		// supv reply with DTCM storage in SDRAM
 #define KEY_APP_SEND_AJMP		0x48FE		// regularly (during checkpointing), app cores will send this start jump address
 #define KEY_APP_SEND_SPTR		0x49FE		// and stack pointer as well
+#define KEY_APP_SEND_CPSR		0x4AFE		// send the current program status register
 #define KEY_SUPV_TRIGGER_ITCMSTG	0x1234		// supv send ITCM location to a pmagent
 #define KEY_SUPV_TRIGGER_DTCMSTG	0x5678		// supv send DTCM location to a pmagent
 #define KEY_SUPV_TRIGGER_AJMP		0x9ABC		// supv send AJMP location to a pmagent
 #define KEY_SUPV_PING_PMAGENT		0x7189		// supv send a ping to a pmagent
+
+// testing for saving all registers
+#define KEY_APP_SEND_Rx			0x5000		// app sends rx, here is just the base
 
 // for application examples and demonstration purpose:
 #define PINGER_CORE		2
@@ -102,3 +107,17 @@ typedef struct app_stub		// application holder
 
 #define PMAPP_ITCM_SIZE		0x5F00		// according to pmapp.lnk
 #define PMAPP_DTCM_SIZE		0xE000
+
+uint getCPSR();
+// use mrs to move the contents of a PSR to a general-purpose register.
+__inline void setCPSR(uint _cpsr)
+{
+  asm volatile (
+	"msr	cpsr_c, %[_cpsr]"
+	:
+	: [_cpsr] "r" (_cpsr)
+	:);
+}
+
+
+#endif
